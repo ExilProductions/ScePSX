@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Avalonia;
@@ -18,8 +19,7 @@ namespace ScePSX.UI;
 
 public partial class MainWindow : Window
 {
-    using System.Reflection;
-        public static string version = "ScePSX v" + Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "0.0.0.0";
+    public static string version = "ScePSX v" + Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "0.0.0.0";
     private static string RootPath = AppContext.BaseDirectory;
 
     public PSXHandler PSX;
