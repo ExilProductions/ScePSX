@@ -48,6 +48,9 @@ jobs:
     
     - name: Copy compiled shaders
       run: Copy-Item vkGLSL/*.spv publish/win-x64/Shaders/
+
+    - name: Copy Language Files
+      run: Copy-Item WindowUI/lang publish/win-x64
     
     - name: Restore dependencies
       run: dotnet restore ScePSX.Window.sln
