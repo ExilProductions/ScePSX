@@ -77,7 +77,7 @@ jobs:
         dotnet publish AvaloniaUI/ScePSX.csproj --configuration Release --runtime win-x64 -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true -o ./publish/win-x64
     
     - name: Copy Language Files
-      run: Copy-Item AvaloniaUI/lang publish/win-x64
+      run: Copy-Item AvaloniaUI/lang publish/win-x64 -Force
     
     - name: Upload Windows artifact
       uses: actions/upload-artifact@v4
