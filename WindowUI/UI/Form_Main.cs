@@ -27,7 +27,8 @@ namespace ScePSX.UI
         [DllImport("kernel32.dll")]
         public static extern Boolean FreeConsole();
 
-        public static string version = "ScePSX v0.2.1.1";
+        using System.Reflection;
+        public static string version = "ScePSX v" + Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "0.0.0.0";
 
         private static string mypath = Application.StartupPath;
         public static IniFile ini = new IniFile(mypath + "ScePSX.ini");

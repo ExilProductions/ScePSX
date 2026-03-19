@@ -1,0 +1,312 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version (e.g., 1.0.0) - defaults to tag name'
+        required: false
+
+permissions:
+  contents: write
+
+env:
+  VERSION: ${{ github.event.release.tag_name || inputs.version }}
+
+jobs:
+  build-windows-native:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Get version from tag
+      if: env.VERSION == ''
+      run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+    
+    - name: Setup .NET 8
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+    
+    - name: Compile Vulkan Shaders
+      run: |
+        $oldPath = $env:PATH
+        $env:PATH = "$pwd\vkGLSL;$env:PATH"
+        vkGLSL\glslangValidator.exe -V -S vert vkGLSL\draw.vert.txt -o vkGLSL\draw.vert.spv
+        vkGLSL\glslangValidator.exe -V -S frag vkGLSL\draw.frag.txt -o vkGLSL\draw.frag.spv
+        vkGLSL\glslangValidator.exe -V -S vert vkGLSL\out.vert.txt -o vkGLSL\out.vert.spv
+        vkGLSL\glslangValidator.exe -V -S frag vkGLSL\out.frag.txt -o vkGLSL\out.frag.spv
+        $env:PATH = $oldPath
+    
+    - name: Create Shaders directory
+      run: New-Item -ItemType Directory -Force -Path publish/win-x64/Shaders
+    
+    - name: Copy compiled shaders
+      run: Copy-Item vkGLSL/*.spv publish/win-x64/Shaders/
+    
+    - name: Restore dependencies
+      run: dotnet restore ScePSX.Window.sln
+    
+    - name: Publish Windows x64
+      run: |
+        dotnet publish WindowUI/ScePSX.Win.csproj `
+          --configuration Release `
+          --runtime win-x64 `
+          -p:PublishSingleFile=true `
+          -p:Version=${{ env.VERSION }} `
+          --self-contained true `
+          -o ./publish/win-x64
+    
+    - name: Upload Windows artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ScePSX-Windows-Native
+        path: |
+          ./publish/win-x64/*.exe
+          ./publish/win-x64/Shaders/*
+        retention-days: 5
+
+  build-avalonia-linux:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Get version from tag
+      if: env.VERSION == ''
+      run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+    
+    - name: Setup .NET 8
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+    
+    - name: Restore dependencies
+      run: dotnet restore ScePSX.Avalonia.sln
+    
+    - name: Build Linux x64
+      run: |
+        dotnet publish AvaloniaUI/ScePSX.csproj `
+          --configuration Release `
+          --runtime linux-x64 `
+          -p:PublishSingleFile=true `
+          -p:PublishTrimmed=true `
+          -p:Version=${{ env.VERSION }} `
+          --self-contained true `
+          -o ./publish/linux-x64
+    
+    - name: Build Linux ARM64
+      run: |
+        dotnet publish AvaloniaUI/ScePSX.csproj `
+          --configuration Release `
+          --runtime linux-arm64 `
+          -p:PublishSingleFile=true `
+          -p:PublishTrimmed=true `
+          -p:Version=${{ env.VERSION }} `
+          --self-contained true `
+          -o ./publish/linux-arm64
+    
+    - name: Upload Linux artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ScePSX-Linux
+        path: |
+          ./publish/linux-x64/*
+          ./publish/linux-arm64/*
+        retention-days: 5
+
+  build-avalonia-windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Get version from tag
+      if: env.VERSION == ''
+      run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+    
+    - name: Setup .NET 8
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+    
+    - name: Restore dependencies
+      run: dotnet restore ScePSX.Avalonia.sln
+    
+    - name: Build Windows x64
+      run: |
+        dotnet publish AvaloniaUI/ScePSX.csproj `
+          --configuration Release `
+          --runtime win-x64 `
+          -p:PublishSingleFile=true `
+          -p:PublishTrimmed=true `
+          -p:Version=${{ env.VERSION }} `
+          --self-contained true `
+          -o ./publish/win-x64
+    
+    - name: Upload Windows artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ScePSX-Windows-Avalonia
+        path: ./publish/win-x64/*.exe
+        retention-days: 5
+
+  build-avalonia-macos:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Get version from tag
+      if: env.VERSION == ''
+      run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+    
+    - name: Setup .NET 8
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+    
+    - name: Restore dependencies
+      run: dotnet restore ScePSX.Avalonia.sln
+    
+    - name: Build macOS x64
+      run: |
+        dotnet publish AvaloniaUI/ScePSX.csproj `
+          --configuration Release `
+          --runtime osx-x64 `
+          -p:PublishSingleFile=true `
+          -p:PublishTrimmed=true `
+          -p:Version=${{ env.VERSION }} `
+          --self-contained true `
+          -o ./publish/osx-x64
+    
+    - name: Build macOS ARM64
+      run: |
+        dotnet publish AvaloniaUI/ScePSX.csproj `
+          --configuration Release `
+          --runtime osx-arm64 `
+          -p:PublishSingleFile=true `
+          -p:PublishTrimmed=true `
+          -p:Version=${{ env.VERSION }} `
+          --self-contained true `
+          -o ./publish/osx-arm64
+    
+    - name: Upload macOS artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ScePSX-macOS
+        path: |
+          ./publish/osx-x64/*
+          ./publish/osx-arm64/*
+        retention-days: 5
+
+  build-android:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Get version from tag
+      if: env.VERSION == ''
+      run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+    
+    - name: Setup .NET 8
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+    
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v2
+    
+    - name: Restore dependencies
+      run: dotnet restore ScePSX.Android.sln
+    
+    - name: Build Android x64
+      run: dotnet build Android/ScePSX.csproj --configuration Release --runtime android-x64 -p:AndroidCreatePackagePerAbi=true -p:Version=${{ env.VERSION }}
+    
+    - name: Build Android ARM64
+      run: dotnet build Android/ScePSX.csproj --configuration Release --runtime android-arm64 -p:AndroidCreatePackagePerAbi=true -p:Version=${{ env.VERSION }}
+    
+    - name: Build Android ARM32
+      run: dotnet build Android/ScePSX.csproj --configuration Release --runtime android-arm -p:AndroidCreatePackagePerAbi=true -p:Version=${{ env.VERSION }}
+    
+    - name: Upload Android artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ScePSX-Android
+        path: |
+          Android/bin/Release/**/android.*/com.unknowall.ScePSX-Signed.apk
+          Android/bin/Release/**/android.arm64-v8a/com.unknowall.ScePSX-Signed.apk
+          Android/bin/Release/**/android.armeabi-v7a/com.unknowall.ScePSX-Signed.apk
+        retention-days: 5
+
+  create-release:
+    needs: [build-windows-native, build-avalonia-linux, build-avalonia-windows, build-avalonia-macos, build-android]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+    
+    - name: Display structure
+      run: ls -R artifacts/
+    
+    - name: Prepare Windows Native
+      run: |
+        mkdir -p release
+        cd artifacts/ScePSX-Windows-Native
+        cp *.exe Shaders/* release/ 2>/dev/null || true
+        cd ../..
+        zip -r release/ScePSX-Windows-Native.zip release/
+        rm -rf release/*
+    
+    - name: Prepare Windows Avalonia
+      run: |
+        cp artifacts/ScePSX-Windows-Avalonia/*.exe release/ 2>/dev/null || true
+        zip -r release/ScePSX-Windows-Avalonia.zip release/
+        rm -f release/*.exe
+    
+    - name: Prepare Linux
+      run: |
+        cp -r artifacts/ScePSX-Linux/* release/ 2>/dev/null || true
+        zip -r release/ScePSX-Linux-x64.zip release/linux-x64/
+        zip -r release/ScePSX-Linux-ARM64.zip release/linux-arm64/
+        rm -rf release/*
+    
+    - name: Prepare macOS
+      run: |
+        cp -r artifacts/ScePSX-macOS/* release/ 2>/dev/null || true
+        zip -r release/ScePSX-macOS-x64.zip release/osx-x64/
+        zip -r release/ScePSX-macOS-ARM64.zip release/osx-arm64/
+        rm -rf release/*
+    
+    - name: Prepare Android
+      run: |
+        find artifacts/ScePSX-Android -name "*.apk" -exec cp {} release/ \;
+        for apk in release/*.apk; do
+          [ -f "$apk" ] || continue
+          name=$(basename "$apk")
+          zip -r "release/${name%.apk}.zip" "$apk"
+        done
+        rm -f release/*.apk
+    
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
+      with:
+        draft: false
+        prerelease: ${{ contains(github.ref, 'beta') || contains(github.ref, 'alpha') || contains(github.ref, 'rc') }}
+        files: release/*.zip
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

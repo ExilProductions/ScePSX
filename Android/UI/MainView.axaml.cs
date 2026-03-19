@@ -13,8 +13,9 @@ namespace ScePSX
 {
     public partial class MainView : UserControl
     {
-        public const string Ver = "ScePSX v0.2.1.1";
-        public const string Version = "Version 0.2.1.1";
+        using System.Reflection;
+        public static string Ver => "ScePSX v" + Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "0.0.0.0";
+        public static string Version => "Version " + Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "0.0.0.0";
 
         GameActivityMange ActivityMange;
         public PSXHandler PSX;
