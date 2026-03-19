@@ -31,6 +31,9 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v2
     
+    - name: Install Android workload
+      run: dotnet workload install android
+    
     - name: Restore dependencies
       run: dotnet restore ScePSX.Android.sln
     
