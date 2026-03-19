@@ -49,9 +49,6 @@ jobs:
     - name: Copy compiled shaders
       run: Copy-Item vkGLSL/*.spv publish/win-x64/Shaders/
 
-    - name: Copy Language Files
-      run: Copy-Item WindowUI/lang publish/win-x64
-    
     - name: Restore dependencies
       run: dotnet restore ScePSX.Window.sln
     
@@ -62,6 +59,9 @@ jobs:
       run: |
         dotnet publish WindowUI/ScePSX.Win.csproj --configuration Release --runtime win-x64 -p:PublishSingleFile=true --self-contained true -o ./publish/win-x64
     
+    - name: Copy Language Files
+      run: Copy-Item WindowUI/lang publish/win-x64
+    
     - name: Upload Windows x64 artifact
       uses: actions/upload-artifact@v4
       with:
@@ -69,4 +69,5 @@ jobs:
         path: |
           ./publish/win-x64/*.exe
           ./publish/win-x64/Shaders/*
+          ./publish/win-x64/lang/*
         retention-days: 30
