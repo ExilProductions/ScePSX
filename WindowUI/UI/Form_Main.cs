@@ -11,6 +11,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
+using System.Reflection;
 using static ScePSX.Controller;
 
 namespace ScePSX.UI
@@ -26,8 +27,6 @@ namespace ScePSX.UI
         public static extern Boolean AllocConsole();
         [DllImport("kernel32.dll")]
         public static extern Boolean FreeConsole();
-
-        using System.Reflection;
         public static string version = "ScePSX v" + Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "0.0.0.0";
 
         private static string mypath = Application.StartupPath;
