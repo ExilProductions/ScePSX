@@ -1,0 +1,75 @@
+name: Build Windows UI
+
+on:
+  push:
+    branches: [main, master, develop]
+    paths:
+      - 'WindowUI/**'
+      - 'ScePSX.Window.sln'
+      - 'ScePSX/Core/**'
+      - '3rdParty/**'
+      - 'vkGLSL/**'
+  pull_request:
+    paths:
+      - 'WindowUI/**'
+      - 'ScePSX.Window.sln'
+      - 'ScePSX/Core/**'
+      - '3rdParty/**'
+      - 'vkGLSL/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup .NET 8
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+    
+    - name: Compile Vulkan Shaders
+      run: |
+        $oldPath = $env:PATH
+        $env:PATH = "$pwd\vkGLSL;$env:PATH"
+        vkGLSL\glslangValidator.exe -V -S vert vkGLSL\draw.vert.txt -o vkGLSL\draw.vert.spv
+        vkGLSL\glslangValidator.exe -V -S frag vkGLSL\draw.frag.txt -o vkGLSL\draw.frag.spv
+        vkGLSL\glslangValidator.exe -V -S vert vkGLSL\out.vert.txt -o vkGLSL\out.vert.spv
+        vkGLSL\glslangValidator.exe -V -S frag vkGLSL\out.frag.txt -o vkGLSL\out.frag.spv
+        $env:PATH = $oldPath
+        if (!(Test-Path "vkGLSL\draw.vert.spv")) { exit 1 }
+    
+    - name: Create Shaders directory
+      run: New-Item -ItemType Directory -Force -Path publish/win-x64/Shaders
+    
+    - name: Copy compiled shaders
+      run: Copy-Item vkGLSL/*.spv publish/win-x64/Shaders/
+    
+    - name: Restore dependencies
+      run: dotnet restore ScePSX.Window.sln
+    
+    - name: Build Release
+      run: dotnet build ScePSX.Window.sln --configuration Release --no-restore
+    
+    - name: Publish self-contained x64
+      run: |
+        dotnet publish WindowUI/ScePSX.Win.csproj `
+          --configuration Release `
+          --runtime win-x64 `
+          -p:PublishSingleFile=true `
+          --self-contained true `
+          -o ./publish/win-x64
+    
+    - name: Upload Windows x64 artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ScePSX-Windows-x64
+        path: |
+          ./publish/win-x64/*.exe
+          ./publish/win-x64/Shaders/*
+        retention-days: 30

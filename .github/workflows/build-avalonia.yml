@@ -1,0 +1,138 @@
+name: Build AvaloniaUI (Cross-Platform)
+
+on:
+  push:
+    branches: [main, master, develop]
+    paths:
+      - 'AvaloniaUI/**'
+      - 'ScePSX.Avalonia.sln'
+      - 'ScePSX/Core/**'
+      - '3rdParty/**'
+  pull_request:
+    paths:
+      - 'AvaloniaUI/**'
+      - 'ScePSX.Avalonia.sln'
+      - 'ScePSX/Core/**'
+      - '3rdParty/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup .NET 8
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+    
+    - name: Restore dependencies
+      run: dotnet restore ScePSX.Avalonia.sln
+    
+    - name: Build Linux x64
+      run: |
+        dotnet publish AvaloniaUI/ScePSX.csproj `
+          --configuration Release `
+          --runtime linux-x64 `
+          -p:PublishSingleFile=true `
+          -p:PublishTrimmed=true `
+          --self-contained true `
+          -o ./publish/linux-x64
+    
+    - name: Build Linux ARM64
+      run: |
+        dotnet publish AvaloniaUI/ScePSX.csproj `
+          --configuration Release `
+          --runtime linux-arm64 `
+          -p:PublishSingleFile=true `
+          -p:PublishTrimmed=true `
+          --self-contained true `
+          -o ./publish/linux-arm64
+    
+    - name: Upload Linux artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ScePSX-Linux
+        path: |
+          ./publish/linux-x64/*
+          ./publish/linux-arm64/*
+        retention-days: 30
+  
+  build-windows:
+    runs-on: windows-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup .NET 8
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+    
+    - name: Restore dependencies
+      run: dotnet restore ScePSX.Avalonia.sln
+    
+    - name: Build Windows x64
+      run: |
+        dotnet publish AvaloniaUI/ScePSX.csproj `
+          --configuration Release `
+          --runtime win-x64 `
+          -p:PublishSingleFile=true `
+          -p:PublishTrimmed=true `
+          --self-contained true `
+          -o ./publish/win-x64
+    
+    - name: Upload Windows artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ScePSX-Windows-Avalonia
+        path: ./publish/win-x64/*.exe
+        retention-days: 30
+  
+  build-macos:
+    runs-on: macos-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup .NET 8
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+    
+    - name: Restore dependencies
+      run: dotnet restore ScePSX.Avalonia.sln
+    
+    - name: Build macOS x64
+      run: |
+        dotnet publish AvaloniaUI/ScePSX.csproj `
+          --configuration Release `
+          --runtime osx-x64 `
+          -p:PublishSingleFile=true `
+          -p:PublishTrimmed=true `
+          --self-contained true `
+          -o ./publish/osx-x64
+    
+    - name: Build macOS ARM64
+      run: |
+        dotnet publish AvaloniaUI/ScePSX.csproj `
+          --configuration Release `
+          --runtime osx-arm64 `
+          -p:PublishSingleFile=true `
+          -p:PublishTrimmed=true `
+          --self-contained true `
+          -o ./publish/osx-arm64
+    
+    - name: Upload macOS artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ScePSX-macOS
+        path: |
+          ./publish/osx-x64/*
+          ./publish/osx-arm64/*
+        retention-days: 30

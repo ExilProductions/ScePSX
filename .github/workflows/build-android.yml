@@ -1,0 +1,70 @@
+name: Build Android
+
+on:
+  push:
+    branches: [main, master, develop]
+    paths:
+      - 'Android/**'
+      - 'ScePSX.Android.sln'
+      - 'ScePSX/Core/**'
+  pull_request:
+    paths:
+      - 'Android/**'
+      - 'ScePSX.Android.sln'
+      - 'ScePSX/Core/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup .NET 8
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+    
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v2
+    
+    - name: Restore dependencies
+      run: dotnet restore ScePSX.Android.sln
+    
+    - name: Build Android x64
+      run: dotnet build Android/ScePSX.csproj --configuration Release --runtime android-x64 -p:AndroidCreatePackagePerAbi=true
+    
+    - name: Build Android ARM64
+      run: dotnet build Android/ScePSX.csproj --configuration Release --runtime android-arm64 -p:AndroidCreatePackagePerAbi=true
+    
+    - name: Build Android ARM32
+      run: dotnet build Android/ScePSX.csproj --configuration Release --runtime android-arm -p:AndroidCreatePackagePerAbi=true
+    
+    - name: Find APK files
+      shell: powershell
+      run: Get-ChildItem -Path . -Recurse -Include "*.apk" | Select-Object -ExpandProperty FullName
+    
+    - name: Upload Android x64 APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: ScePSX-Android-x64
+        path: Android/bin/Release/**/android.*/com.unknowall.ScePSX-Signed.apk
+        retention-days: 30
+    
+    - name: Upload Android ARM64 APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: ScePSX-Android-ARM64
+        path: Android/bin/Release/**/android.arm64-v8a/com.unknowall.ScePSX-Signed.apk
+        retention-days: 30
+    
+    - name: Upload Android ARM32 APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: ScePSX-Android-ARM32
+        path: Android/bin/Release/**/android.armeabi-v7a/com.unknowall.ScePSX-Signed.apk
+        retention-days: 30
