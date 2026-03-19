@@ -40,12 +40,18 @@ jobs:
     - name: Copy Language Files to Linux x64
       run: cp -r AvaloniaUI/lang publish/linux-x64
     
+    - name: Copy SDL2 for Linux x64
+      run: cp LIBS/SDL2/amd64/libSDL2.so publish/linux-x64
+    
     - name: Build Linux ARM64
       run: |
         dotnet publish AvaloniaUI/ScePSX.csproj --configuration Release --runtime linux-arm64 -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true -o ./publish/linux-arm64
 
     - name: Copy Language Files to Linux ARM64
       run: cp -r AvaloniaUI/lang publish/linux-arm64
+    
+    - name: Copy SDL2 for Linux ARM64
+      run: cp LIBS/SDL2/armhf/libSDL2.so publish/linux-arm64
     
     - name: Upload Linux artifacts
       uses: actions/upload-artifact@v4
@@ -56,6 +62,8 @@ jobs:
           ./publish/linux-arm64/*
           ./publish/linux-x64/lang/*
           ./publish/linux-arm64/lang/*
+          ./publish/linux-x64/libSDL2.so
+          ./publish/linux-arm64/libSDL2.so
         retention-days: 30
   
   build-windows:
@@ -79,6 +87,9 @@ jobs:
     - name: Copy Language Files
       run: Copy-Item AvaloniaUI/lang publish/win-x64 -Force
     
+    - name: Copy SDL2 DLL
+      run: Copy-Item LIBS/SDL2/win64/SDL2.dll publish/win-x64
+    
     - name: Upload Windows artifact
       uses: actions/upload-artifact@v4
       with:
@@ -86,6 +97,7 @@ jobs:
         path: |
           ./publish/win-x64/*.exe
           ./publish/win-x64/lang/*
+          ./publish/win-x64/SDL2.dll
         retention-days: 30
   
   build-macos:
@@ -109,12 +121,18 @@ jobs:
     - name: Copy Language Files to macOS x64
       run: cp -r AvaloniaUI/lang publish/osx-x64
     
+    - name: Copy SDL2 for macOS x64
+      run: cp LIBS/SDL2/osx/SDL2.dylib publish/osx-x64
+    
     - name: Build macOS ARM64
       run: |
         dotnet publish AvaloniaUI/ScePSX.csproj --configuration Release --runtime osx-arm64 -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true -o ./publish/osx-arm64
     
     - name: Copy Language Files to macOS ARM64
       run: cp -r AvaloniaUI/lang publish/osx-arm64
+    
+    - name: Copy SDL2 for macOS ARM64
+      run: cp LIBS/SDL2/osx/SDL2.dylib publish/osx-arm64
     
     - name: Upload macOS artifacts
       uses: actions/upload-artifact@v4
@@ -125,4 +143,6 @@ jobs:
           ./publish/osx-arm64/*
           ./publish/osx-x64/lang/*
           ./publish/osx-arm64/lang/*
+          ./publish/osx-x64/SDL2.dylib
+          ./publish/osx-arm64/SDL2.dylib
         retention-days: 30

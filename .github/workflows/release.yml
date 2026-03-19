@@ -58,6 +58,9 @@ jobs:
     - name: Copy Language Files
       run: Copy-Item WindowUI/lang publish/win-x64 -Force
     
+    - name: Copy SDL2 DLL
+      run: Copy-Item LIBS/SDL2/win64/SDL2.dll publish/win-x64
+    
     - name: Upload Windows artifact
       uses: actions/upload-artifact@v4
       with:
@@ -65,6 +68,8 @@ jobs:
         path: |
           ./publish/win-x64/*.exe
           ./publish/win-x64/Shaders/*
+          ./publish/win-x64/lang/*
+          ./publish/win-x64/SDL2.dll
         retention-days: 5
 
   build-avalonia-linux:
@@ -90,9 +95,15 @@ jobs:
       run: |
         dotnet publish AvaloniaUI/ScePSX.csproj --configuration Release --runtime linux-x64 -p:PublishSingleFile=true -p:PublishTrimmed=true -p:Version=${{ env.VERSION }} --self-contained true -o ./publish/linux-x64
     
+    - name: Copy SDL2 for Linux x64
+      run: cp LIBS/SDL2/amd64/libSDL2.so publish/linux-x64
+    
     - name: Build Linux ARM64
       run: |
         dotnet publish AvaloniaUI/ScePSX.csproj --configuration Release --runtime linux-arm64 -p:PublishSingleFile=true -p:PublishTrimmed=true -p:Version=${{ env.VERSION }} --self-contained true -o ./publish/linux-arm64
+    
+    - name: Copy SDL2 for Linux ARM64
+      run: cp LIBS/SDL2/armhf/libSDL2.so publish/linux-arm64
     
     - name: Upload Linux artifacts
       uses: actions/upload-artifact@v4
@@ -101,6 +112,8 @@ jobs:
         path: |
           ./publish/linux-x64/*
           ./publish/linux-arm64/*
+          ./publish/linux-x64/libSDL2.so
+          ./publish/linux-arm64/libSDL2.so
         retention-days: 5
 
   build-avalonia-windows:
@@ -126,11 +139,16 @@ jobs:
       run: |
         dotnet publish AvaloniaUI/ScePSX.csproj --configuration Release --runtime win-x64 -p:PublishSingleFile=true -p:PublishTrimmed=true -p:Version=${{ env.VERSION }} --self-contained true -o ./publish/win-x64
     
+    - name: Copy SDL2 DLL
+      run: Copy-Item LIBS/SDL2/win64/SDL2.dll publish/win-x64
+    
     - name: Upload Windows artifact
       uses: actions/upload-artifact@v4
       with:
         name: ScePSX-Windows-Avalonia
-        path: ./publish/win-x64/*.exe
+        path: |
+          ./publish/win-x64/*.exe
+          ./publish/win-x64/SDL2.dll
         retention-days: 5
 
   build-avalonia-macos:
@@ -156,9 +174,15 @@ jobs:
       run: |
         dotnet publish AvaloniaUI/ScePSX.csproj --configuration Release --runtime osx-x64 -p:PublishSingleFile=true -p:PublishTrimmed=true -p:Version=${{ env.VERSION }} --self-contained true -o ./publish/osx-x64
     
+    - name: Copy SDL2 for macOS x64
+      run: cp LIBS/SDL2/osx/SDL2.dylib publish/osx-x64
+    
     - name: Build macOS ARM64
       run: |
         dotnet publish AvaloniaUI/ScePSX.csproj --configuration Release --runtime osx-arm64 -p:PublishSingleFile=true -p:PublishTrimmed=true -p:Version=${{ env.VERSION }} --self-contained true -o ./publish/osx-arm64
+    
+    - name: Copy SDL2 for macOS ARM64
+      run: cp LIBS/SDL2/osx/SDL2.dylib publish/osx-arm64
     
     - name: Upload macOS artifacts
       uses: actions/upload-artifact@v4
@@ -167,6 +191,8 @@ jobs:
         path: |
           ./publish/osx-x64/*
           ./publish/osx-arm64/*
+          ./publish/osx-x64/SDL2.dylib
+          ./publish/osx-arm64/SDL2.dylib
         retention-days: 5
 
   build-android:
@@ -228,16 +254,16 @@ jobs:
       run: |
         mkdir -p release
         cd artifacts/ScePSX-Windows-Native
-        cp *.exe Shaders/* release/ 2>/dev/null || true
+        cp *.exe Shaders/* lang/* SDL2.dll release/ 2>/dev/null || true
         cd ../..
         zip -r release/ScePSX-Windows-Native.zip release/
         rm -rf release/*
     
     - name: Prepare Windows Avalonia
       run: |
-        cp artifacts/ScePSX-Windows-Avalonia/*.exe release/ 2>/dev/null || true
+        cp artifacts/ScePSX-Windows-Avalonia/*.exe SDL2.dll release/ 2>/dev/null || true
         zip -r release/ScePSX-Windows-Avalonia.zip release/
-        rm -f release/*.exe
+        rm -f release/*.exe release/*.dll
     
     - name: Prepare Linux
       run: |
