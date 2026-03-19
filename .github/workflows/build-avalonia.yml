@@ -35,23 +35,11 @@ jobs:
     
     - name: Build Linux x64
       run: |
-        dotnet publish AvaloniaUI/ScePSX.csproj `
-          --configuration Release `
-          --runtime linux-x64 `
-          -p:PublishSingleFile=true `
-          -p:PublishTrimmed=true `
-          --self-contained true `
-          -o ./publish/linux-x64
+        dotnet publish AvaloniaUI/ScePSX.csproj --configuration Release --runtime linux-x64 -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true -o ./publish/linux-x64
     
     - name: Build Linux ARM64
       run: |
-        dotnet publish AvaloniaUI/ScePSX.csproj `
-          --configuration Release `
-          --runtime linux-arm64 `
-          -p:PublishSingleFile=true `
-          -p:PublishTrimmed=true `
-          --self-contained true `
-          -o ./publish/linux-arm64
+        dotnet publish AvaloniaUI/ScePSX.csproj --configuration Release --runtime linux-arm64 -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true -o ./publish/linux-arm64
     
     - name: Upload Linux artifacts
       uses: actions/upload-artifact@v4
@@ -78,13 +66,7 @@ jobs:
     
     - name: Build Windows x64
       run: |
-        dotnet publish AvaloniaUI/ScePSX.csproj `
-          --configuration Release `
-          --runtime win-x64 `
-          -p:PublishSingleFile=true `
-          -p:PublishTrimmed=true `
-          --self-contained true `
-          -o ./publish/win-x64
+        dotnet publish AvaloniaUI/ScePSX.csproj --configuration Release --runtime win-x64 -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true -o ./publish/win-x64
     
     - name: Upload Windows artifact
       uses: actions/upload-artifact@v4
@@ -109,23 +91,11 @@ jobs:
     
     - name: Build macOS x64
       run: |
-        dotnet publish AvaloniaUI/ScePSX.csproj `
-          --configuration Release `
-          --runtime osx-x64 `
-          -p:PublishSingleFile=true `
-          -p:PublishTrimmed=true `
-          --self-contained true `
-          -o ./publish/osx-x64
+        dotnet publish AvaloniaUI/ScePSX.csproj --configuration Release --runtime osx-x64 -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true -o ./publish/osx-x64
     
     - name: Build macOS ARM64
       run: |
-        dotnet publish AvaloniaUI/ScePSX.csproj `
-          --configuration Release `
-          --runtime osx-arm64 `
-          -p:PublishSingleFile=true `
-          -p:PublishTrimmed=true `
-          --self-contained true `
-          -o ./publish/osx-arm64
+        dotnet publish AvaloniaUI/ScePSX.csproj --configuration Release --runtime osx-arm64 -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true -o ./publish/osx-arm64
     
     - name: Upload macOS artifacts
       uses: actions/upload-artifact@v4
